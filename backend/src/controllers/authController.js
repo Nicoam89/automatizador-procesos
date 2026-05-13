@@ -1,8 +1,33 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import User from "../models/User.js";
+import connectDB from "../config/db.js";
+
+const ensureDbConnection = async (res) => {
+  if (mongoose.connection.readyState === 1) {
+    return true;
+  }
+
+  try {
+    await connectDB();
+    return true;
+  } catch (error) {
+    res.status(503).json({
+      message:
+        "Servicio temporalmente no disponible. Verifica MONGO_URI y que MongoDB esté encendido.",
+      detail: error.message,
+    });
+
+    return false;
+  }
+};
 
 export const register = async (req, res) => {
+  if (!(await ensureDbConnection(res))) {
+    return;
+  }
+
   try {
     const { name, email, password } = req.body;
 
@@ -48,6 +73,10 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
+  if (!(await ensureDbConnection(res))) {
+    return;
+  }
+
   try {
     const { email, password } = req.body;
 

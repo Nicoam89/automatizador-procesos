@@ -16,6 +16,8 @@ function Login() {
     password: "",
   });
 
+  const [error, setError] = useState("");
+
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -25,6 +27,8 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    setError("");
 
     try {
       const response = await api.post(
@@ -36,7 +40,10 @@ function Login() {
 
       navigate("/");
     } catch (error) {
-      console.error(error);
+      setError(
+        error.response?.data?.message ||
+          "No fue posible iniciar sesión"
+      );
     }
   };
 
@@ -62,6 +69,8 @@ function Login() {
         <button type="submit">
           Ingresar
         </button>
+
+        {error && <p>{error}</p>}
       </form>
     </div>
   );
