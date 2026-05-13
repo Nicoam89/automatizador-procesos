@@ -1,11 +1,9 @@
-import {
-  useCallback,
-  useState,
-  useEffect,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import ReactFlow, {
   addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
   Background,
   Controls,
   MiniMap,
@@ -16,336 +14,133 @@ import "reactflow/dist/style.css";
 import api from "../../api/axios";
 import socket from "../../socket";
 
-function WorkflowBuilder() {
-
-  const [nodes, setNodes] =
-    useState([]);
-
-  const [edges, setEdges] =
-    useState([]);
-
-  const [workflowName,
-    setWorkflowName] =
-    useState("");
-    useEffect(() => {
-
-  socket.on(
-    "workflow:node-running",
-    ({ nodeId }) => {
-
-      setNodes((nds) =>
-        nds.map((node) =>
-
-          node.id === nodeId
-
-            ? {
-                ...node,
-
-                style: {
-                  background:
-                    "#facc15",
-                },
-              }
-
-            : node
-        )
-      );
-    }
-  );
-
-  socket.on(
-    "workflow:node-completed",
-    ({ nodeId }) => {
-
-      setNodes((nds) =>
-        nds.map((node) =>
-
-          node.id === nodeId
-
-            ? {
-                ...node,
-
-                style: {
-                  background:
-                    "#22c55e",
-                },
-              }
-
-            : node
-        )
-      );
-    }
-  );
-
-  socket.on(
-    "workflow:node-failed",
-    ({ nodeId }) => {
-
-      setNodes((nds) =>
-        nds.map((node) =>
-
-          node.id === nodeId
-
-            ? {
-                ...node,
-
-                style: {
-                  background:
-                    "#ef4444",
-                },
-              }
-
-            : node
-        )
-      );
-    }
-  );
-
-  return () => {
-
-    socket.off(
-      "workflow:node-running"
-    );
-
-    socket.off(
-      "workflow:node-completed"
-    );
-
-    socket.off(
-      "workflow:node-failed"
-    );
-  };
-
-}, []);
-
-  const onConnect = useCallback(
-    (params) =>
-      setEdges((eds) =>
-        addEdge(params, eds)
-      ),
-    []
-  );
-
-const addNode = (
-  actionType = "log"
-) => {
-
-  const configs = {
-
-    log: {
-      message:
-       "Usuario: {{1.data.title}}"
-    },
-
-    delay: {
-      duration: 3000,
-    },
-
-    http: {
-      url:
-        "https://jsonplaceholder.typicode.com/todos/1",
-
-      method: "GET",
-    },
-
-    condition: {
-
-      left:
-        "{{1.data.userId}}",
-
-      operator: "==",
-
-      right: "1",
-    },
-
-  };
-
-  const labels = {
-
-    log: "Logger",
-
-    delay: "Delay",
-
-    http: "HTTP Request",
-
-    condition: "Condition",
-  };
-
-  const newNode = {
-
-    id: `${nodes.length + 1}`,
-
-    type: "default",
-
-    position: {
-      x: Math.random() * 400,
-      y: Math.random() * 400,
-    },
-
-    data: {
-
-      label:
-        labels[actionType],
-
-      actionType,
-
-      config:
-        configs[actionType],
-    },
-  };
-
-  setNodes((nds) => [
-    ...nds,
-    newNode,
-  ]);
+const NODE_DEFINITIONS = {
+  log: { label: "Logger", config: { message: "Usuario: {{1.data.title}}" } },
+  delay: { label: "Delay", config: { duration: 3000 } },
+  http: {
+    label: "HTTP Request",
+    config: { url: "https://jsonplaceholder.typicode.com/todos/1", method: "GET", headers: {}, body: {} },
+  },
+  condition: { label: "Condition", config: { left: "{{1.data.userId}}", operator: "==", right: "1" } },
+  webhook: {
+    label: "Webhook",
+    config: { url: "https://webhook.site/endpoint-demo", method: "POST", headers: { "Content-Type": "application/json" }, body: { event: "workflow.alert", source: "{{1.data.title}}" } },
+  },
+  transform: { label: "Transform", config: { fields: { userId: "{{1.data.userId}}", title: "{{1.data.title}}" } } },
+  setContext: { label: "Set Context", config: { values: { status: "processed", reference: "{{1.data.title}}" } } },
 };
 
-const [savedWorkflowId,
-  setSavedWorkflowId] =
-  useState(null);
+function WorkflowBuilder() {
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
+  const [workflowName, setWorkflowName] = useState("");
+  const [savedWorkflowId, setSavedWorkflowId] = useState(null);
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [configText, setConfigText] = useState("{}");
+  const [configError, setConfigError] = useState("");
 
-const executeWorkflowHandler =
-  async () => {
+  const selectedNode = useMemo(() => nodes.find((node) => node.id === selectedNodeId) || null, [nodes, selectedNodeId]);
 
-    if (!savedWorkflowId) {
+  useEffect(() => {
+    const setNodeColor = (nodeId, color) => {
+      setNodes((nds) => nds.map((node) => (node.id === nodeId ? { ...node, style: { ...node.style, background: color } } : node)));
+    };
 
-      alert(
-        "Primero guardá el workflow"
-      );
+    socket.on("workflow:node-running", ({ nodeId }) => setNodeColor(nodeId, "#facc15"));
+    socket.on("workflow:node-completed", ({ nodeId }) => setNodeColor(nodeId, "#22c55e"));
+    socket.on("workflow:node-failed", ({ nodeId }) => setNodeColor(nodeId, "#ef4444"));
 
-      return;
-    }
+    return () => {
+      socket.off("workflow:node-running");
+      socket.off("workflow:node-completed");
+      socket.off("workflow:node-failed");
+    };
+  }, []);
+
+  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), []);
+  const onNodesChange = useCallback((changes) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
+  const onEdgesChange = useCallback((changes) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
+
+  const addNode = (actionType = "log") => {
+    const definition = NODE_DEFINITIONS[actionType];
+    setNodes((nds) => {
+      const nextIndex = nds.length + 1;
+      const newNode = {
+        id: `node-${nextIndex}`,
+        type: "default",
+        position: { x: 80 * nextIndex, y: 60 * nextIndex },
+        data: { label: definition.label, actionType, config: definition.config },
+      };
+
+      return [...nds, newNode];
+    });
+  };
+
+  const applyConfigToNode = () => {
+    if (!selectedNode) return;
 
     try {
-
-      await api.post(
-        `/api/workflows/${savedWorkflowId}/execute`
-      );
-
-      alert(
-        "Workflow ejecutado"
-      );
-
-    } catch (error) {
-
-      console.error(error);
-
+      const parsed = JSON.parse(configText);
+      setNodes((nds) => nds.map((node) => (node.id === selectedNode.id ? { ...node, data: { ...node.data, config: parsed } } : node)));
+      setConfigError("");
+    } catch {
+      setConfigError("JSON inválido. Revisá llaves, comas y comillas.");
     }
   };
 
-  const saveWorkflow =
-    async () => {
-
-      try {
-
-const response =
-  await api.post(
-    "/api/workflows",
-    {
-      name:
-        workflowName,
-      nodes,
-      edges,
+  const executeWorkflowHandler = async () => {
+    if (!savedWorkflowId) return alert("Primero guardá el workflow");
+    try {
+      await api.post(`/api/workflows/${savedWorkflowId}/execute`);
+      alert("Workflow ejecutado");
+    } catch (error) {
+      console.error(error);
     }
-  );
+  };
 
-setSavedWorkflowId(
-  response.data._id
-);
-
-        alert(
-          "Workflow guardado"
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
-    };
+  const saveWorkflow = async () => {
+    try {
+      const response = await api.post("/api/workflows", { name: workflowName, nodes, edges });
+      setSavedWorkflowId(response.data._id);
+      alert("Workflow guardado");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div>
-
-      <div
-        style={{
-          marginBottom: "10px",
-        }}
-      >
-
-        <input
-          type="text"
-          placeholder="Nombre workflow"
-          value={workflowName}
-          onChange={(e) =>
-            setWorkflowName(
-              e.target.value
-            )
-          }
-        />
-  
-
-
-
-<button
-  onClick={() =>
-    addNode("log")
-  }
->
-  Nodo Log
-</button>
-
-<button
-  onClick={() =>
-    addNode("delay")
-  }
->
-  Nodo Delay
-</button>
-
-<button
-  onClick={() =>
-    addNode("http")
-  }
->
-  Nodo HTTP
-</button>
-
-        <button
-          onClick={saveWorkflow}
-        >
-          Guardar Workflow
-        </button>
-
-          <button
-  onClick={
-    executeWorkflowHandler
-  }
->
-  Ejecutar Workflow
-</button>
-
+      <div style={{ marginBottom: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <input type="text" placeholder="Nombre workflow" value={workflowName} onChange={(e) => setWorkflowName(e.target.value)} />
+        {Object.keys(NODE_DEFINITIONS).map((type) => (
+          <button key={type} onClick={() => addNode(type)}>{`Nodo ${NODE_DEFINITIONS[type].label}`}</button>
+        ))}
+        <button onClick={saveWorkflow}>Guardar Workflow</button>
+        <button onClick={executeWorkflowHandler}>Ejecutar Workflow</button>
       </div>
 
-      <div
-        style={{
-          height: "80vh",
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 12 }}>
+        <div style={{ height: "80vh" }}>
+          <ReactFlow nodes={nodes} edges={edges} onConnect={onConnect} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onNodeClick={(_, node) => { setSelectedNodeId(node.id); setConfigText(JSON.stringify(node.data.config || {}, null, 2)); setConfigError(""); }} fitView>
+            <MiniMap />
+            <Controls />
+            <Background />
+          </ReactFlow>
+        </div>
 
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onConnect={onConnect}
-          fitView
-        >
-          <MiniMap />
-
-          <Controls />
-
-          <Background />
-        </ReactFlow>
-
+        <aside style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+          <h4 style={{ marginTop: 0 }}>Configuración de nodo</h4>
+          {!selectedNode ? (
+            <p>Seleccioná un nodo para editar su configuración.</p>
+          ) : (
+            <>
+              <p><strong>{selectedNode.data.label}</strong> ({selectedNode.data.actionType})</p>
+              <textarea value={configText} onChange={(e) => setConfigText(e.target.value)} style={{ width: "100%", minHeight: 320, fontFamily: "monospace", fontSize: 12 }} />
+              {configError && <p style={{ color: "#dc2626" }}>{configError}</p>}
+              <button onClick={applyConfigToNode}>Aplicar Configuración</button>
+            </>
+          )}
+        </aside>
       </div>
     </div>
   );

@@ -1,3 +1,10 @@
+:root {
+  --color-primary: #114185;
+  --color-alt: #e5e7eb;
+  --color-white: #ffffff;
+  --color-black: #000000;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,5 +13,204 @@
 
 body {
   font-family: Arial, sans-serif;
-  background-color: #ffffff;
+  background-color: var(--color-alt);
+  color: var(--color-black);
+}
+
+input,
+button,
+select,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+}
+
+.app-sidebar {
+  width: 240px;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: 20px;
+}
+
+.app-brand-icons {
+  margin-bottom: 28px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.app-brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-white);
+  padding: 4px;
+}
+
+.app-title {
+  margin-bottom: 18px;
+  font-size: 1.25rem;
+}
+
+.app-user-name {
+  margin-bottom: 22px;
+}
+
+.app-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.app-nav-link {
+  color: inherit;
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.app-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+.app-logout-btn {
+  margin-top: 8px;
+  border: 1px solid var(--color-white);
+  border-radius: 8px;
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-content {
+  flex: 1;
+  padding: 28px;
+}
+
+.app-content h1,
+.app-content h2,
+.app-content h3 {
+  margin-bottom: 12px;
+}
+
+.app-content p {
+  margin-bottom: 10px;
+}
+
+.app-content form {
+  max-width: 560px;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-alt);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.app-content input,
+.app-content select,
+.app-content textarea {
+  width: 100%;
+  border: 1px solid var(--color-alt);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.app-content button {
+  border: 1px solid var(--color-white);
+  border-radius: 8px;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 600;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-alt);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+}
+
+.auth-title {
+  margin-bottom: 18px;
+  text-align: center;
+  color: var(--color-primary);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form input {
+  border: 1px solid var(--color-alt);
+  border-radius: 8px;
+  padding: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.auth-form input:focus {
+  border-color: var(--color-primary);
+}
+
+.auth-form button {
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 600;
+  padding: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.auth-form button:hover {
+  opacity: 0.92;
+}
+
+.auth-error {
+  color: var(--color-black);
+  background-color: var(--color-alt);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.92rem;
+}
+
+.auth-footnote {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.auth-footnote a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-footnote a:hover {
+  text-decoration: underline;
 }

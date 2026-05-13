@@ -4,7 +4,7 @@ import api from "../api/axios";
 
 import { useAuth } from "../context/AuthContext";
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Login() {
   const navigate = useNavigate();
@@ -48,30 +48,41 @@ function Login() {
   };
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-title">Login</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
-        />
+        <form
+          onSubmit={handleSubmit}
+          className="auth-form"
+        >
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            onChange={handleChange}
+            required
+          />
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleChange}
-        />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            onChange={handleChange}
+            required
+          />
 
-        <button type="submit">
-          Ingresar
-        </button>
+          <button type="submit">Ingresar</button>
 
-        {error && <p>{error}</p>}
-      </form>
+          {error && (
+            <p className="auth-error">{error}</p>
+          )}
+        </form>
+
+        <p className="auth-footnote">
+          ¿No tenés cuenta? <Link to="/register">Registrate</Link>
+        </p>
+      </div>
     </div>
   );
 }

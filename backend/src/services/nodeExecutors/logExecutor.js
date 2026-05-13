@@ -1,3 +1,5 @@
+import { resolveTemplate } from "./utils.js";
+
 const logExecutor =
   async (
     node,
@@ -5,7 +7,7 @@ const logExecutor =
   ) => {
 
     const message =
-      replaceVariables(
+      resolveTemplate(
         node.data.config.message,
         context
       );
@@ -16,33 +18,6 @@ const logExecutor =
       success: true,
       message,
     };
-  };
-
-const replaceVariables =
-  (text, context) => {
-
-    return text.replace(
-      /\{\{(.*?)\}\}/g,
-
-      (_, variable) => {
-
-        const path =
-          variable
-            .trim()
-            .split(".");
-
-        let value =
-          context;
-
-        for (const key of path) {
-
-          value =
-            value?.[key];
-        }
-
-        return value || "";
-      }
-    );
   };
 
 export default logExecutor;
