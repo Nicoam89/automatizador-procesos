@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -18,14 +19,8 @@ function WorkflowDebugger() {
     setDebug] =
     useState(null);
 
-  useEffect(() => {
-
-    fetchDebug();
-
-  }, []);
-
   const fetchDebug =
-    async () => {
+    useCallback(async () => {
 
       try {
 
@@ -43,7 +38,12 @@ function WorkflowDebugger() {
         console.error(error);
 
       }
-    };
+    }, [id]);
+
+    useEffect(() => {
+    Promise.resolve().then(fetchDebug);
+  }, [fetchDebug]);
+
 
   if (!debug) {
     return <p>Cargando...</p>;

@@ -204,11 +204,6 @@ const [savedWorkflowId,
   setSavedWorkflowId] =
   useState(null);
 
-  const saveWorkflow =
-    async () => {
-
-      try {
-
 const executeWorkflowHandler =
   async () => {
 
@@ -238,6 +233,10 @@ const executeWorkflowHandler =
     }
   };
 
+  const saveWorkflow =
+    async () => {
+
+      try {
 
 const response =
   await api.post(

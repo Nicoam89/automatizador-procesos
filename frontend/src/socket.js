@@ -1,5 +1,5 @@
 import { io }
-  from "socket.io-client";
+  from "./lib/socketClient";
 
 const socket = io(
   "http://localhost:5000"

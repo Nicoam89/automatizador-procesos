@@ -48,8 +48,8 @@ function Automations() {
 };
 
 useEffect(() => {
-  fetchAutomations();
-  fetchExecutions();
+  Promise.resolve().then(fetchAutomations);
+  Promise.resolve().then(fetchExecutions);
 }, []);
 
   const handleChange = (e) => {
