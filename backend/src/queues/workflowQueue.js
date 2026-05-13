@@ -4,12 +4,20 @@ import { Queue }
 import connection
   from "../redis.js";
 
-const workflowQueue =
-  new Queue(
-    "workflowQueue",
-    {
-      connection,
-    }
-  );
+let workflowQueue =
+  null;
 
-export default workflowQueue;
+export const getWorkflowQueue =
+  () => {
+    if (!workflowQueue) {
+      workflowQueue =
+        new Queue(
+          "workflowQueue",
+          {
+            connection,
+          }
+        );
+    }
+
+    return workflowQueue;
+  };

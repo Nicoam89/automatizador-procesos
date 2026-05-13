@@ -5,7 +5,7 @@ import Workflow from "../models/Workflow.js";
 import WorkflowExecution from "../models/WorkflowExecution.js";
 import nodeExecutors from "./nodeExecutors/index.js";
 import NodeExecution from "../models/NodeExecution.js";
-import { io }  from "../server.js";
+import { getIo } from "../socket.js";
 
 export const executeWorkflow =
   async (
@@ -129,7 +129,7 @@ const nodeExecution =
 
   });
 
-io.emit(
+getIo()?.emit(
   "workflow:node-running",
   {
     workflowExecutionId:
@@ -168,7 +168,7 @@ try {
 
   await nodeExecution.save();
 
-    io.emit(
+  getIo()?.emit(
   "workflow:node-completed",
   {
     workflowExecutionId:
@@ -206,7 +206,7 @@ try {
 
   await nodeExecution.save();
 
-  io.emit(
+  getIo()?.emit(
   "workflow:node-failed",
   {
     workflowExecutionId:

@@ -7,8 +7,11 @@ import WorkflowExecution
 import NodeExecution
   from "../models/NodeExecution.js";
 
-import workflowQueue
-  from "../queues/workflowQueue.js";
+import {
+  getWorkflowQueue,
+} from "../queues/workflowQueue.js";
+
+
 
 export const createWorkflow =
   async (req, res) => {
@@ -113,7 +116,7 @@ export const executeWorkflowController =
     try {
 
       const job =
-        await workflowQueue.add(
+        await getWorkflowQueue().add(
 
           "executeWorkflow",
 

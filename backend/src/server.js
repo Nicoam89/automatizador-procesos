@@ -1,6 +1,7 @@
 import http from "http";
 
 import app from "./app.js";
+import { setIo } from "./socket.js";
 
 import { Server }
   from "socket.io";
@@ -19,6 +20,8 @@ export const io =
         "http://localhost:5173",
     },
   });
+
+setIo(io);
 
 server.listen(PORT, () => {
 

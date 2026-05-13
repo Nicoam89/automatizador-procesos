@@ -4,10 +4,10 @@
   "description": "Backend automatizador de procesos",
   "main": "src/server.js",
   "type": "module",
-"scripts": {
-  "dev": "nodemon src/server.js",
-  "worker": "node src/workers/workflowWorker.js"
-},
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "worker": "node src/workers/workflowWorker.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -22,6 +22,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.0.0",
     "node-cron": "^4.2.1",
+    "redis": "^5.12.1",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
