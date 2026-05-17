@@ -2,8 +2,8 @@ import Automation from "../models/Automation.js";
 import Execution from "../models/Execution.js";
 
 import {
-  executeAutomationService,
-} from "../services/automationService.js";
+  enqueueAutomationExecution,
+} from "../queues/automationQueue.js";
 
 import {
   startAutomationJob,
@@ -64,12 +64,17 @@ export const executeAutomation =
 
     try {
 
-      const execution =
-        await executeAutomationService(
-          req.params.id
-        );
+     const job =
+        await enqueueAutomationExecution({
+          automationId: req.params.id,
+          source: "manual",
+        });
 
-      res.json(execution);
+      res.status(202).json({
+        message: "Automatización encolada",
+        jobId: job.id,
+      });
+
 
     } catch (error) {
 

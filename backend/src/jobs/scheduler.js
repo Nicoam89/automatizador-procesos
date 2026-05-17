@@ -3,8 +3,8 @@ import cron from "node-cron";
 import Automation from "../models/Automation.js";
 
 import {
-  executeAutomationService,
-} from "../services/automationService.js";
+  enqueueAutomationExecution,
+} from "../queues/automationQueue.js";
 
 const activeJobs = {};
 
@@ -52,9 +52,12 @@ export const startAutomationJob =
 
         try {
 
-          await executeAutomationService(
-            automation._id
-          );
+          await enqueueAutomationExecution({
+            automationId: String(automation._id),
+            source: "cron",
+          });
+
+
 
         } catch (error) {
 
