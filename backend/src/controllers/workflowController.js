@@ -10,7 +10,7 @@ import NodeExecution
 import {
   getWorkflowQueue,
 } from "../queues/workflowQueue.js";
-
+import { ApiError, sendError } from "../utils/apiError.js";
 
 
 export const createWorkflow =
@@ -47,10 +47,7 @@ export const createWorkflow =
 
     } catch (error) {
 
-      res.status(500).json({
-        message:
-          error.message,
-      });
+      sendError(res, error);
 
     }
   };
@@ -70,10 +67,7 @@ export const getWorkflows =
 
     } catch (error) {
 
-      res.status(500).json({
-        message:
-          error.message,
-      });
+      sendError(res, error);
 
     }
   };
@@ -90,22 +84,17 @@ export const getWorkflowById =
 
       if (!workflow) {
 
-        return res
-          .status(404)
-          .json({
-            message:
-              "Workflow no encontrado",
-          });
+        return sendError(
+          res,
+          new ApiError(404, "WORKFLOW_NOT_FOUND", "Workflow no encontrado")
+        );
       }
 
       res.json(workflow);
 
     } catch (error) {
 
-      res.status(500).json({
-        message:
-          error.message,
-      });
+      sendError(res, error);
 
     }
   };
@@ -149,10 +138,7 @@ export const executeWorkflowController =
 
     } catch (error) {
 
-      res.status(500).json({
-        message:
-          error.message,
-      });
+      sendError(res, error);
 
     }
   };
@@ -187,10 +173,7 @@ export const getExecutionDebugger =
 
     } catch (error) {
 
-      res.status(500).json({
-        message:
-          error.message,
-      });
+      sendError(res, error);
 
     }
   };

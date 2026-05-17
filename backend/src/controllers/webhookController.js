@@ -3,6 +3,7 @@ import Workflow from "../models/Workflow.js";
 import {
   executeWorkflow,
 } from "../services/workflowEngine.js";
+import { ApiError, sendError } from "../utils/apiError.js";
 
 export const triggerWebhook =
   async (req, res) => {
@@ -17,12 +18,10 @@ export const triggerWebhook =
 
       if (!workflow) {
 
-        return res
-          .status(404)
-          .json({
-            message:
-              "Webhook no encontrado",
-          });
+        return sendError(
+          res,
+          new ApiError(404, "WEBHOOK_NOT_FOUND", "Webhook no encontrado")
+        );
       }
 
       const context = {
@@ -53,10 +52,7 @@ export const triggerWebhook =
 
     } catch (error) {
 
-      res.status(500).json({
-        message:
-          error.message,
-      });
+      sendError(res, error);
 
     }
   };

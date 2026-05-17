@@ -9,6 +9,7 @@ import {
   startAutomationJob,
   stopAutomationJob,
 } from "../jobs/scheduler.js";
+import { sendError } from "../utils/apiError.js";
 
 
 export const createAutomation =
@@ -39,10 +40,7 @@ export const createAutomation =
 
     } catch (error) {
 
-      res.status(500).json({
-        message:
-          error.message,
-      });
+      sendError(res, error);
 
     }
   };
@@ -57,9 +55,7 @@ export const getAutomations = async (
 
     res.json(automations);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    sendError(res, error);
   }
 };
 
@@ -77,9 +73,7 @@ export const executeAutomation =
 
     } catch (error) {
 
-      res.status(500).json({
-        message: error.message,
-      });
+      sendError(res, error);
 
     }
   };
@@ -97,9 +91,7 @@ export const getExecutions =
 
     } catch (error) {
 
-      res.status(500).json({
-        message: error.message,
-      });
+      sendError(res, error);
 
     }
   };

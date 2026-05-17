@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import User from "../models/User.js";
 import connectDB from "../config/db.js";
+import { ApiError, sendError } from "../utils/apiError.js";
 
 const ensureDbConnection = async (res) => {
   if (mongoose.connection.readyState === 1) {
@@ -13,11 +14,15 @@ const ensureDbConnection = async (res) => {
     await connectDB();
     return true;
   } catch (error) {
-    res.status(503).json({
-      message:
+    sendError(
+      res,
+      new ApiError(
+        503,
+        "DB_UNAVAILABLE",
         "Servicio temporalmente no disponible. Verifica MONGO_URI y que MongoDB esté encendido.",
-      detail: error.message,
-    });
+        error.message
+      )
+    );
 
     return false;
   }
@@ -34,9 +39,10 @@ export const register = async (req, res) => {
     const userExists = await User.findOne({ email });
 
     if (userExists) {
-      return res.status(400).json({
-        message: "El usuario ya existe",
-      });
+      return sendError(
+        res,
+        new ApiError(400, "USER_ALREADY_EXISTS", "El usuario ya existe")
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -66,9 +72,7 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    sendError(res, error);
   }
 };
 
@@ -83,9 +87,10 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({
-        message: "Credenciales inválidas",
-      });
+      return sendError(
+        res,
+        new ApiError(400, "INVALID_CREDENTIALS", "Credenciales inválidas")
+      );
     }
 
     const isMatch = await bcrypt.compare(
@@ -94,9 +99,10 @@ export const login = async (req, res) => {
     );
 
     if (!isMatch) {
-      return res.status(400).json({
-        message: "Credenciales inválidas",
-      });
+      return sendError(
+        res,
+        new ApiError(400, "INVALID_CREDENTIALS", "Credenciales inválidas")
+      );
     }
 
     const token = jwt.sign(
@@ -118,8 +124,6 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    sendError(res, error);
   }
 };
