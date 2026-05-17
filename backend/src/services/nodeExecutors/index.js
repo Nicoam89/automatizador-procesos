@@ -20,6 +20,15 @@ import setContextExecutor
   from "./setContextExecutor.js";
 
 
+import mailExecutor
+  from "./mailExecutor.js";
+
+import textParserExecutor
+  from "./textParserExecutor.js";
+
+import codeExecutor
+  from "./codeExecutor.js";
+
 const nodeExecutors = {
 
   log: logExecutor,
@@ -35,6 +44,12 @@ const nodeExecutors = {
   transform: transformExecutor,
 
   setContext: setContextExecutor,
+
+  mail: mailExecutor,
+
+  textParser: textParserExecutor,
+
+  code: codeExecutor,
 };
 
 export default nodeExecutors;

@@ -28,6 +28,22 @@ const NODE_DEFINITIONS = {
   },
   transform: { label: "Transform", config: { fields: { userId: "{{1.data.userId}}", title: "{{1.data.title}}" } } },
   setContext: { label: "Set Context", config: { values: { status: "processed", reference: "{{1.data.title}}" } } },
+  mail: {
+      label: "Mail",
+      config: {
+        transport: { host: "smtp.mailtrap.io", port: 2525, secure: false, auth: { user: "", pass: "" } },
+        message: { from: "bot@workflow.local", to: "destino@correo.com", subject: "Notificación {{node-1.data.title}}", text: "Hola, esto es una alerta" },
+      },
+    },
+    textParser: {
+      label: "Text Parser",
+      config: { mode: "json", input: '{"key":"value"}', pattern: "(\\w+)=(\\w+)", flags: "g", delimiter: "=", lineSeparator: "\n" },
+    },
+    code: {
+      label: "Código",
+      config: { input: { value: 5 }, code: "output = { doubled: input.value * 2 };", timeoutMs: 1000 },
+    },
+
 };
 
 function WorkflowBuilder() {
