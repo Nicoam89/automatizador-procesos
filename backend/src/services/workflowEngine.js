@@ -14,7 +14,12 @@ export const executeWorkflow = async (workflowId, initialContext = {}) => {
   const execution = await WorkflowExecution.create({
     workflow: workflow._id,
     status: "running",
-    logs: ["Iniciando workflow"],
+    logs: [
+      {
+        message: "Iniciando workflow",
+        context: { workflowId },
+      },
+    ],
     context: initialContext,
   });
 
@@ -25,13 +30,22 @@ export const executeWorkflow = async (workflowId, initialContext = {}) => {
     await processNode(firstNode, workflow, execution, visited);
 
     execution.status = "completed";
-    execution.logs.push("Workflow finalizado");
+    appendExecutionLog(execution, {
+      message: "Workflow finalizado",
+      context: { workflowId },
+    });
     await execution.save();
 
     return execution;
   } catch (error) {
     execution.status = "failed";
-    execution.logs.push(`Error: ${error.message}`);
+    appendExecutionLog(execution, {
+      level: "error",
+      message: `Error general del workflow: ${error.message}`,
+      context: {
+        workflowId,
+      },
+    });
     await execution.save();
 
     throw error;
@@ -45,7 +59,14 @@ const processNode = async (node, workflow, execution, visited) => {
 
   visited.add(node.id);
 
-  execution.logs.push(`Ejecutando nodo: ${node.data.label}`);
+  appendExecutionLog(execution, {
+    message: `Ejecutando nodo: ${node.data.label}`,
+    nodeId: node.id,
+    nodeLabel: node.data.label,
+    context: {
+      actionType: node.data.actionType,
+    },
+  });
   await execution.save();
 
   const nodeExecution = await NodeExecution.create({
@@ -84,6 +105,15 @@ const processNode = async (node, workflow, execution, visited) => {
     });
 
     execution.context[node.id] = result;
+    appendExecutionLog(execution, {
+      message: `Nodo completado: ${node.data.label}`,
+      nodeId: node.id,
+      nodeLabel: node.data.label,
+      context: {
+        actionType: node.data.actionType,
+        durationMs: Date.now() - startTime,
+      },
+    });
     await execution.save();
   } catch (error) {
     nodeExecution.status = "failed";
@@ -97,6 +127,18 @@ const processNode = async (node, workflow, execution, visited) => {
       nodeId: node.id,
       error: error.message,
     });
+
+    appendExecutionLog(execution, {
+      level: "error",
+      message: `Nodo falló: ${node.data.label}`,
+      nodeId: node.id,
+      nodeLabel: node.data.label,
+      context: {
+        actionType: node.data.actionType,
+        error: error.message,
+      },
+    });
+    await execution.save();
 
     throw error;
   }
@@ -122,6 +164,17 @@ const processNode = async (node, workflow, execution, visited) => {
     const nextNode = workflow.nodes.find((n) => n.id === edge.target);
     await processNode(nextNode, workflow, execution, visited);
   }
+};
+
+const appendExecutionLog = (execution, logData) => {
+  execution.logs.push({
+    level: logData.level || "info",
+    message: logData.message,
+    nodeId: logData.nodeId,
+    nodeLabel: logData.nodeLabel,
+    timestamp: new Date(),
+    context: logData.context || {},
+  });
 };
 
 const executeNodeAction = async (node, context) => {

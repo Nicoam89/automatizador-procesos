@@ -23,6 +23,25 @@ const workflowExecutionSchema =
 
       logs: [
         {
+          level: {
+            type: String,
+            enum: ["info", "error"],
+            default: "info",
+          },
+          message: {
+            type: String,
+            required: true,
+          },
+          nodeId: {
+            type: String,
+          },
+          nodeLabel: {
+            type: String,
+          },
+          timestamp: {
+            type: Date,
+            default: Date.now,
+          },
           context: {
            type: Object,
           default: {},
