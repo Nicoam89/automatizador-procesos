@@ -214,3 +214,23 @@ textarea {
 .auth-footnote a:hover {
   text-decoration: underline;
 }
+
+.workflow-toolbar {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workflow-toolbar__node-buttons,
+.workflow-toolbar__feature-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workflow-feature-btn {
+  background: var(--color-white);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+}

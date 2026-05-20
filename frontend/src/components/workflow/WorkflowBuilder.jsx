@@ -10,6 +10,8 @@ import ReactFlow, {
 } from "reactflow";
 
 import "reactflow/dist/style.css";
+import "/src/styles/global.css";
+
 
 import api from "../../api/axios";
 import socket from "../../socket";
@@ -46,9 +48,12 @@ const NODE_DEFINITIONS = {
 
 };
 
+
 function WorkflowBuilder() {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [copiedNode, setCopiedNode] = useState(null);
   const [workflowName, setWorkflowName] = useState("");
   const [savedWorkflowId, setSavedWorkflowId] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
@@ -56,6 +61,23 @@ function WorkflowBuilder() {
   const [configError, setConfigError] = useState("");
 
   const selectedNode = useMemo(() => nodes.find((node) => node.id === selectedNodeId) || null, [nodes, selectedNodeId]);
+  const createSnapshot = useCallback((nextNodes, nextEdges) => ({
+    nodes: JSON.parse(JSON.stringify(nextNodes)),
+    edges: JSON.parse(JSON.stringify(nextEdges)),
+  }), []);
+
+  const pushHistory = useCallback((nextNodes, nextEdges) => {
+    setHistory((prev) => [...prev, createSnapshot(nextNodes, nextEdges)]);
+  }, [createSnapshot]);
+
+  const getNextNodeId = useCallback((currentNodes) => {
+    const maxId = currentNodes.reduce((acc, node) => {
+      const match = /^node-(\d+)$/.exec(node.id);
+      return match ? Math.max(acc, Number(match[1])) : acc;
+    }, 0);
+
+    return `node-${maxId + 1}`;
+  }, []);
 
   useEffect(() => {
     const setNodeColor = (nodeId, color) => {
@@ -73,24 +95,113 @@ function WorkflowBuilder() {
     };
   }, []);
 
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), []);
-  const onNodesChange = useCallback((changes) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
-  const onEdgesChange = useCallback((changes) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
+  const onConnect = useCallback((params) => {
+    const nextEdges = addEdge(params, edges);
+    pushHistory(nodes, edges);
+    setEdges(nextEdges);
+  }, [edges, nodes, pushHistory]);
+
+  const onNodesChange = useCallback((changes) => {
+    const nextNodes = applyNodeChanges(changes, nodes);
+    pushHistory(nodes, edges);
+    setNodes(nextNodes);
+  }, [edges, nodes, pushHistory]);
+
+  const onEdgesChange = useCallback((changes) => {
+    const nextEdges = applyEdgeChanges(changes, edges);
+    pushHistory(nodes, edges);
+    setEdges(nextEdges);
+  }, [edges, nodes, pushHistory]);
 
   const addNode = (actionType = "log") => {
     const definition = NODE_DEFINITIONS[actionType];
+    pushHistory(nodes, edges);
     setNodes((nds) => {
-      const nextIndex = nds.length + 1;
+      const nextId = getNextNodeId(nds);
       const newNode = {
-        id: `node-${nextIndex}`,
+        id: nextId,
         type: "default",
-        position: { x: 80 * nextIndex, y: 60 * nextIndex },
+        position: { x: 80 * (nds.length + 1), y: 60 * (nds.length + 1) },
         data: { label: definition.label, actionType, config: definition.config },
       };
 
       return [...nds, newNode];
     });
   };
+
+  const deleteSelectedNode = useCallback(() => {
+    if (!selectedNodeId) return;
+
+    pushHistory(nodes, edges);
+    setNodes((nds) => nds.filter((node) => node.id !== selectedNodeId));
+    setEdges((eds) => eds.filter((edge) => edge.source !== selectedNodeId && edge.target !== selectedNodeId));
+    setSelectedNodeId(null);
+    setConfigText("{}");
+    setConfigError("");
+  }, [selectedNodeId, nodes, edges, pushHistory]);
+
+  const undoLastAction = useCallback(() => {
+    setHistory((prev) => {
+      if (!prev.length) return prev;
+      const lastSnapshot = prev[prev.length - 1];
+      setNodes(lastSnapshot.nodes);
+      setEdges(lastSnapshot.edges);
+      setSelectedNodeId((currentSelectedId) => (lastSnapshot.nodes.some((node) => node.id === currentSelectedId) ? currentSelectedId : null));
+      return prev.slice(0, -1);
+    });
+  }, []);
+
+  const copySelectedNode = useCallback(() => {
+    if (!selectedNode) return;
+    setCopiedNode(JSON.parse(JSON.stringify(selectedNode)));
+  }, [selectedNode]);
+
+  const pasteCopiedNode = useCallback(() => {
+    if (!copiedNode) return;
+
+    pushHistory(nodes, edges);
+    const nextId = getNextNodeId(nodes);
+    const pastedNode = {
+      ...JSON.parse(JSON.stringify(copiedNode)),
+      id: nextId,
+      position: { x: copiedNode.position.x + 40, y: copiedNode.position.y + 40 },
+    };
+
+    setNodes((nds) => [...nds, pastedNode]);
+    setSelectedNodeId(nextId);
+    setConfigText(JSON.stringify(pastedNode.data.config || {}, null, 2));
+    setConfigError("");
+  }, [copiedNode, edges, getNextNodeId, nodes, pushHistory]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const targetTag = event.target.tagName?.toLowerCase();
+      const isInputTarget = targetTag === "input" || targetTag === "textarea";
+
+      if ((event.key === "Delete" || event.key === "Backspace") && !isInputTarget) {
+        event.preventDefault();
+        deleteSelectedNode();
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        undoLastAction();
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" && !isInputTarget) {
+        event.preventDefault();
+        copySelectedNode();
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v" && !isInputTarget) {
+        event.preventDefault();
+        pasteCopiedNode();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [copySelectedNode, deleteSelectedNode, pasteCopiedNode, undoLastAction]);
 
   const applyConfigToNode = () => {
     if (!selectedNode) return;
@@ -126,15 +237,22 @@ function WorkflowBuilder() {
 
   return (
     <div>
-      <div style={{ marginBottom: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+       <div className="workflow-toolbar">
         <input type="text" placeholder="Nombre workflow" value={workflowName} onChange={(e) => setWorkflowName(e.target.value)} />
-        {Object.keys(NODE_DEFINITIONS).map((type) => (
-          <button key={type} onClick={() => addNode(type)}>{`${NODE_DEFINITIONS[type].label}`}</button>
-        ))}
-        <button className="contrast-btn" onClick={saveWorkflow}>Guardar Workflow</button>
-        <button className="contrast-btn" onClick={executeWorkflowHandler}>Ejecutar Workflow</button>
+        <div className="workflow-toolbar__node-buttons">
+          {Object.keys(NODE_DEFINITIONS).map((type) => (
+            <button key={type} onClick={() => addNode(type)}>{`${NODE_DEFINITIONS[type].label}`}</button>
+          ))}
+        </div>
+        <div className="workflow-toolbar__feature-buttons">
+          <button className="workflow-feature-btn" onClick={saveWorkflow}>Guardar Workflow</button>
+          <button className="workflow-feature-btn" onClick={executeWorkflowHandler}>Ejecutar Workflow</button>
+          <button className="workflow-feature-btn" onClick={copySelectedNode} disabled={!selectedNode}>Copiar Nodo</button>
+          <button className="workflow-feature-btn" onClick={pasteCopiedNode} disabled={!copiedNode}>Pegar Nodo</button>
+          <button className="workflow-feature-btn" onClick={undoLastAction} disabled={!history.length}>Deshacer</button>
+          <button className="workflow-feature-btn" onClick={deleteSelectedNode} disabled={!selectedNode}>Eliminar Nodo</button>
+        </div>
       </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 12 }}>
         <div style={{ height: "80vh" }}>
           <ReactFlow nodes={nodes} edges={edges} onConnect={onConnect} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onNodeClick={(_, node) => { setSelectedNodeId(node.id); setConfigText(JSON.stringify(node.data.config || {}, null, 2)); setConfigError(""); }} fitView>
