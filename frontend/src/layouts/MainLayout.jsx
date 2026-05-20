@@ -10,18 +10,14 @@ function MainLayout({ children }) {
       <aside className="app-sidebar">
         <div className="app-brand-icons">
           <img
-            src="/favicon.svg"
+            src="./Public/1.png"
             alt="Logo principal"
             className="app-brand-icon"
           />
-          <img
-            src="/icons.svg"
-            alt="Logo secundario"
-            className="app-brand-icon"
-          />
+
         </div>
 
-        <h2 className="app-title">Automatizador</h2>
+        <h2 className="app-title">Procesos iQ</h2>
 
         <p className="app-user-name">{user?.name}</p>
 

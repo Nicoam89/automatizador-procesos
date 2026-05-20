@@ -129,10 +129,10 @@ function WorkflowBuilder() {
       <div style={{ marginBottom: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input type="text" placeholder="Nombre workflow" value={workflowName} onChange={(e) => setWorkflowName(e.target.value)} />
         {Object.keys(NODE_DEFINITIONS).map((type) => (
-          <button key={type} onClick={() => addNode(type)}>{`Nodo ${NODE_DEFINITIONS[type].label}`}</button>
+          <button key={type} onClick={() => addNode(type)}>{`${NODE_DEFINITIONS[type].label}`}</button>
         ))}
-        <button onClick={saveWorkflow}>Guardar Workflow</button>
-        <button onClick={executeWorkflowHandler}>Ejecutar Workflow</button>
+        <button className="contrast-btn" onClick={saveWorkflow}>Guardar Workflow</button>
+        <button className="contrast-btn" onClick={executeWorkflowHandler}>Ejecutar Workflow</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 12 }}>
