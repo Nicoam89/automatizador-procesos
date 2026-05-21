@@ -7,6 +7,9 @@ import ReactFlow, {
   Background,
   Controls,
   MiniMap,
+  Handle,
+  Position,
+
 } from "reactflow";
 
 import "reactflow/dist/style.css";
@@ -48,6 +51,48 @@ const NODE_DEFINITIONS = {
 
 };
 
+const NODE_ICONS = {
+  log: "/Logger.png",
+  delay: "/Delay.png",
+  http: "/Http.png",
+  condition: "/Conditional.png",
+  webhook: "/Webhook.png",
+  transform: "/Transform.png",
+  setContext: "/SetContext.png",
+  mail: "/Mail.png",
+  textParser: "/TextParser.png",
+  code: "/Codex.png",
+};
+
+function WorkflowNode({ data, selected }) {
+  const iconSrc = NODE_ICONS[data.actionType];
+
+  return (
+    <>
+      <Handle type="target" position={Position.Left} />
+      <div
+      style={{
+        border: selected ? "2px solid #2563eb" : "1px solid #cbd5e1",
+        borderRadius: 10,
+        background: "#ffffff",
+        padding: 0,
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+      }}
+    >
+      {iconSrc && (
+        <img
+          src={iconSrc}
+          alt={data.label}
+          style={{ width: 50, height: 50, objectFit: "", flexShrink: 0, borderRadius: 10, }}
+        />
+      )}
+    </div>
+     <Handle type="source" position={Position.Right} />
+     </>
+  );
+}
 
 function WorkflowBuilder() {
   const [nodes, setNodes] = useState([]);
@@ -59,6 +104,8 @@ function WorkflowBuilder() {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [configText, setConfigText] = useState("{}");
   const [configError, setConfigError] = useState("");
+
+  const nodeTypes = useMemo(() => ({ workflowNode: WorkflowNode }), []);
 
   const selectedNode = useMemo(() => nodes.find((node) => node.id === selectedNodeId) || null, [nodes, selectedNodeId]);
   const createSnapshot = useCallback((nextNodes, nextEdges) => ({
@@ -120,7 +167,7 @@ function WorkflowBuilder() {
       const nextId = getNextNodeId(nds);
       const newNode = {
         id: nextId,
-        type: "default",
+        type: "workflowNode",
         position: { x: 80 * (nds.length + 1), y: 60 * (nds.length + 1) },
         data: { label: definition.label, actionType, config: definition.config },
       };
@@ -255,8 +302,7 @@ function WorkflowBuilder() {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 12 }}>
         <div style={{ height: "80vh" }}>
-          <ReactFlow nodes={nodes} edges={edges} onConnect={onConnect} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onNodeClick={(_, node) => { setSelectedNodeId(node.id); setConfigText(JSON.stringify(node.data.config || {}, null, 2)); setConfigError(""); }} fitView>
-            <MiniMap />
+          <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} onConnect={onConnect} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onNodeClick={(_, node) => { setSelectedNodeId(node.id); setConfigText(JSON.stringify(node.data.config || {}, null, 2)); setConfigError(""); }} fitView>
             <Controls />
             <Background />
           </ReactFlow>
