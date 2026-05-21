@@ -177,3 +177,25 @@ export const getExecutionDebugger =
 
     }
   };
+  
+export const getWorkflowExecutions =
+  async (req, res) => {
+
+    try {
+
+      const executions =
+        await WorkflowExecution
+          .find()
+          .populate("workflow")
+          .sort({
+            createdAt: -1,
+          });
+
+      res.json(executions);
+
+    } catch (error) {
+
+      sendError(res, error);
+
+    }
+  };

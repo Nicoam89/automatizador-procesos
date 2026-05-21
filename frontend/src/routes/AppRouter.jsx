@@ -7,10 +7,10 @@ import {
 import MainLayout from "../layouts/MainLayout";
 
 import Dashboard from "../pages/Dashboard";
-import Processes from "../pages/Processes";
 import Automations from "../pages/Automations";
 import Settings from "../pages/Settings";
 import Workflow from "../pages/Workflow";
+import WorkflowDebugger from "../pages/WorkflowDebugger";
 
 
 import Login from "../pages/Login";
@@ -45,17 +45,6 @@ function AppRouter() {
         />
 
         <Route
-          path="/processes"
-          element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Processes />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/automations"
           element={
             <ProtectedRoute>
@@ -71,6 +60,17 @@ function AppRouter() {
             <ProtectedRoute>
               <MainLayout>
                 <Workflow />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/workflows/executions/:id/debug"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <WorkflowDebugger />
               </MainLayout>
             </ProtectedRoute>
           }

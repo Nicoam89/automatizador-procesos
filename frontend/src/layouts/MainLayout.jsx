@@ -30,10 +30,6 @@ function MainLayout({ children }) {
             Workflow Builder
           </Link>
 
-          <Link className="app-nav-link" to="/processes">
-            Procesos
-          </Link>
-
           <Link className="app-nav-link" to="/automations">
             Automatizaciones
           </Link>

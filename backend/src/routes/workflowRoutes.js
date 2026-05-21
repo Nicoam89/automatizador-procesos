@@ -12,6 +12,7 @@ import {
   executeWorkflowController,
 
   getExecutionDebugger,
+  getWorkflowExecutions,
 
 } from "../controllers/workflowController.js";
 
@@ -36,6 +37,11 @@ router.get(
 router.post(
   "/:id/execute",
   executeWorkflowController
+);
+
+router.get(
+  "/executions",
+  getWorkflowExecutions
 );
 
 router.get(
